@@ -25,7 +25,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: TBuild/AyuGramDesktop
-          submodules: recursive
+
+      - name: Populate submodules
+        shell: bash
+        run: |
+          cd "$TBUILD/AyuGramDesktop"
+          git config --file .gitmodules --get-regexp '\.path$' | while read -r key sub_path; do
+            name="${key%.path}"
+            url="$(git config --file .gitmodules --get "${name}.url")"
+            if [ -z "$(ls -A "$sub_path" 2>/dev/null)" ]; then
+              rm -rf "$sub_path"
+              git clone --depth=1 "$url" "$sub_path"
+            fi
+          done
 
       - name: Compute cache key
         shell: bash
