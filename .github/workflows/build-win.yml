@@ -119,6 +119,8 @@ jobs:
           call configure.bat ^
             x64 ^
             qt6 ^
+            -Wno-error=dev ^
+            -D CBOR_MAX_UNCHECKED_DECLARED_SIZE=0 ^
             -D TDESKTOP_API_ID=${{ secrets.TDESKTOP_API_ID || '17349' }} ^
             -D TDESKTOP_API_HASH=${{ secrets.TDESKTOP_API_HASH || '344583e45741c457fe1862106095a5eb' }} ^
             -D CMAKE_CONFIGURATION_TYPES=Release ^
