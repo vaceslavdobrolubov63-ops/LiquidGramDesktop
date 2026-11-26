@@ -30,14 +30,24 @@ jobs:
         shell: bash
         run: |
           cd "$TBUILD/AyuGramDesktop"
+          git clone --depth=1 --branch v7.2.9 --filter=blob:none --no-checkout https://github.com/AyuGram/AyuGramDesktop.git /tmp/ayu-ref
           git config --file .gitmodules --get-regexp '\.path$' | while read -r key sub_path; do
             name="${key%.path}"
             url="$(git config --file .gitmodules --get "${name}.url")"
             if [ -z "$(ls -A "$sub_path" 2>/dev/null)" ]; then
               rm -rf "$sub_path"
-              git clone --depth=1 "$url" "$sub_path"
+              commit="$(git -C /tmp/ayu-ref ls-tree v7.2.9 "$sub_path" | awk '$2 == "commit" { print $3 }')"
+              if [ -n "$commit" ]; then
+                git init "$sub_path"
+                git -C "$sub_path" remote add origin "$url"
+                git -C "$sub_path" fetch --depth=1 origin "$commit"
+                git -C "$sub_path" checkout FETCH_HEAD
+              else
+                git clone --depth=1 "$url" "$sub_path"
+              fi
             fi
           done
+          rm -rf /tmp/ayu-ref
 
       - name: Compute cache key
         shell: bash
