@@ -1,0 +1,115 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: cmd
+
+    env:
+      PREPARE_PATH: "Telegram/build/prepare/prepare.py"
+
+    steps:
+      - name: Prepare directories
+        run: |
+          mkdir %userprofile%\TBuild\Libraries
+          mklink /d %GITHUB_WORKSPACE%\TBuild %userprofile%\TBuild
+          echo TBUILD=%GITHUB_WORKSPACE%\TBuild>>%GITHUB_ENV%
+          echo LibrariesPath=%GITHUB_WORKSPACE%\TBuild\Libraries\win64>>%GITHUB_ENV%
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: TBuild/AyuGramDesktop
+          submodules: recursive
+
+      - name: Compute cache key
+        shell: bash
+        run: |
+          echo "CACHE_KEY=$(sha256sum "$TBUILD/AyuGramDesktop/$PREPARE_PATH" | awk '{ print $1 }')" >> "$GITHUB_ENV"
+
+      - name: Restore ThirdParty cache
+        id: cache-third-party
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.TBUILD }}\ThirdParty
+          key: ${{ runner.OS }}-x64-thirdparty-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-x64-thirdparty-
+
+      - name: Restore Libraries cache
+        id: cache-libs
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ env.LibrariesPath }}\*
+            !${{ env.LibrariesPath }}\cache_keys
+            !${{ env.LibrariesPath }}\[qQ]t[_-]*
+            ${{ env.LibrariesPath }}\cache_keys\*
+            !${{ env.LibrariesPath }}\cache_keys\[qQ]t[_-]*
+          key: ${{ runner.OS }}-x64-libsrel-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-x64-libsrel-
+
+      - name: Restore Qt cache
+        id: cache-qt
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ env.LibrariesPath }}\[qQ]t[_-]*
+            ${{ env.LibrariesPath }}\cache_keys\[qQ]t[_-]*
+          key: ${{ runner.OS }}-x64-qtrel-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-x64-qtrel-
+
+      - name: Prepare libraries
+        run: |
+          %TBUILD%\AyuGramDesktop\Telegram\build\prepare\win.bat silent
+
+      - name: Save ThirdParty cache
+        if: steps.cache-third-party.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.TBUILD }}\ThirdParty
+          key: ${{ steps.cache-third-party.outputs.cache-primary-key }}
+
+      - name: Save Libraries cache
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ env.LibrariesPath }}\*
+            !${{ env.LibrariesPath }}\cache_keys
+            !${{ env.LibrariesPath }}\[qQ]t[_-]*
+            ${{ env.LibrariesPath }}\cache_keys\*
+            !${{ env.LibrariesPath }}\cache_keys\[qQ]t[_-]*
+          key: ${{ steps.cache-libs.outputs.cache-primary-key }}
+
+      - name: Save Qt cache
+        if: steps.cache-qt.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ env.LibrariesPath }}\[qQ]t[_-]*
+            ${{ env.LibrariesPath }}\cache_keys\[qQ]t[_-]*
+          key: ${{ steps.cache-qt.outputs.cache-primary-key }}
+
+      - name: Configure and build
+        run: |
+          cd %TBUILD%\AyuGramDesktop\Telegram
+          call configure.bat ^
+            x64 ^
+            -D TDESKTOP_API_ID=${{ secrets.TDESKTOP_API_ID || '17349' }} ^
+            -D TDESKTOP_API_HASH=${{ secrets.TDESKTOP_API_HASH || '344583e45741c457fe1862106095a5eb' }} ^
+            -D CMAKE_CONFIGURATION_TYPES=Release ^
+            -D DESKTOP_APP_SPECIAL_TARGET=win64 ^
+            -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
+            -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
+          cmake --build ..\out --config Release --target Telegram --parallel
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AyuGram-win64
+          path: ${{ env.TBUILD }}\AyuGramDesktop\out\Release\Telegram.exe
