@@ -63,6 +63,11 @@ jobs:
           key: ${{ runner.OS }}-x64-qtrel-${{ env.CACHE_KEY }}
           restore-keys: ${{ runner.OS }}-x64-qtrel-
 
+      - name: Setup MSVC x64 environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Prepare libraries
         run: |
           %TBUILD%\AyuGramDesktop\Telegram\build\prepare\win.bat silent
