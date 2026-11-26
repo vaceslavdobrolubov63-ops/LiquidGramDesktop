@@ -158,4 +158,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: AyuGram-win64
-          path: ${{ env.TBUILD }}\AyuGramDesktop\out\Release\Telegram.exe
+          path: ${{ env.TBUILD }}\AyuGramDesktop\out\Release\AyuGram.exe
