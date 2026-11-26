@@ -13,9 +13,9 @@
 #include <QtGui/QColor>
 #include <QtGui/QImage>
 
-namespace Ui::GL {
-class Surface;
-} // namespace Ui::GL
+namespace Ui {
+class RpWidgetWrap;
+} // namespace Ui
 
 namespace Ayu::Ui {
 
@@ -70,7 +70,7 @@ private:
 	bool _autoCaptureParent = false;
 	bool _capturing = false;
 	base::Timer _captureTimer;
-	std::unique_ptr<::Ui::GL::Surface> _surface;
+	std::unique_ptr<::Ui::RpWidgetWrap> _surface;
 	Renderer *_renderer = nullptr;
 };
 

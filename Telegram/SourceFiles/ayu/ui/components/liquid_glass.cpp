@@ -368,7 +368,7 @@ LiquidGlassWidget::~LiquidGlassWidget() = default;
 
 bool LiquidGlassWidget::Supported() {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-	if (::Ui::PowerSaving::On(::Ui::PowerSaving::kAnimations)) {
+	if (::PowerSaving::On(::PowerSaving::kAnimations)) {
 		return false;
 	}
 	return ::Ui::GL::WidgetsRhiSupported();
