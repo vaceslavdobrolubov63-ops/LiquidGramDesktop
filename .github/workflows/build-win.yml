@@ -15,25 +15,11 @@ jobs:
 
     steps:
       - name: Free disk space
-        shell: pwsh
+        shell: bash
         run: |
-          Get-PSDrive C,D | Select-Object Name,@{N='FreeGB';E={[math]::Round($_.Free/1GB,2)}}
-          $targets = @(
-            'C:\Program Files (x86)\Android',
-            'C:\Android',
-            'C:\msys64',
-            'C:\Strawberry',
-            'C:\Program Files\dotnet',
-            'C:\Program Files\PostgreSQL',
-            'C:\Program Files\MySQL',
-            'C:\hostedtoolcache\windows\Ruby',
-            'C:\hostedtoolcache\windows\Java',
-            'C:\hostedtoolcache\windows\CodeQL'
-          )
-          foreach ($t in $targets) {
-            if (Test-Path $t) { Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $t }
-          }
-          Get-PSDrive C,D | Select-Object Name,@{N='FreeGB';E={[math]::Round($_.Free/1GB,2)}}
+          df -h
+          rm -rf "/c/Program Files (x86)/Android" "/c/Android" "/c/msys64" "/c/Strawberry" "/c/hostedtoolcache/windows/Ruby" "/c/hostedtoolcache/windows/Java" "/c/hostedtoolcache/windows/CodeQL"
+          df -h
 
       - name: Prepare directories
         run: |
@@ -166,7 +152,7 @@ jobs:
             -D DESKTOP_APP_SPECIAL_TARGET=win64 ^
             -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
             -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
-          cmake --build ..\out --config Release --target Telegram -- -m:2 /p:CL_MPCount=2
+          cmake --build ..\out --config Release --target Telegram -- -m:3 /p:CL_MPCount=3 /p:PreferredToolArchitecture=x64
 
       - name: Save out cache
         if: always()
