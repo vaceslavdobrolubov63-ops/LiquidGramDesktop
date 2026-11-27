@@ -14,6 +14,27 @@ jobs:
       PREPARE_PATH: "Telegram/build/prepare/prepare.py"
 
     steps:
+      - name: Free disk space
+        shell: pwsh
+        run: |
+          Get-PSDrive C,D | Select-Object Name,@{N='FreeGB';E={[math]::Round($_.Free/1GB,2)}}
+          $targets = @(
+            'C:\Program Files (x86)\Android',
+            'C:\Android',
+            'C:\msys64',
+            'C:\Strawberry',
+            'C:\Program Files\dotnet',
+            'C:\Program Files\PostgreSQL',
+            'C:\Program Files\MySQL',
+            'C:\hostedtoolcache\windows\Ruby',
+            'C:\hostedtoolcache\windows\Java',
+            'C:\hostedtoolcache\windows\CodeQL'
+          )
+          foreach ($t in $targets) {
+            if (Test-Path $t) { Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $t }
+          }
+          Get-PSDrive C,D | Select-Object Name,@{N='FreeGB';E={[math]::Round($_.Free/1GB,2)}}
+
       - name: Prepare directories
         run: |
           mkdir %userprofile%\TBuild\Libraries
